@@ -11,6 +11,7 @@ import { LoadingIndicator } from '@/components/common/LoadingIndicator';
 import { FeatureUnavailable, ProgressiveFallback } from '@/components/common/GracefulDegradation';
 import { useSession } from '@/contexts/SessionContext';
 import { useEmotionContext } from '@/contexts/EmotionContext';
+import { Navbar } from '@/components/common/Navbar';
 import { WebcamError } from '@/types';
 import { EmotionDetectionError } from '@/utils/emotionDetection';
 import { AppError, ErrorHandler } from '@/lib/errorHandling';
@@ -29,10 +30,10 @@ export const TherapySession: React.FC<TherapySessionProps> = ({
   const [emotionError, setEmotionError] = useState<AppError | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
   const [retryAttempts, setRetryAttempts] = useState({ webcam: 0, emotion: 0 });
-  
+
   // Refs
   const videoRef = useRef<HTMLVideoElement>(null);
-  
+
   // Contexts
   const { session } = useSession();
   const { currentEmotion, isEmotionDetectionActive } = useEmotionContext();
@@ -51,7 +52,7 @@ export const TherapySession: React.FC<TherapySessionProps> = ({
   const handleWebcamReady = useCallback((stream: MediaStream) => {
     if (videoRef.current) {
       videoRef.current.srcObject = stream;
-      
+
       // Wait for video metadata to load before setting as ready for emotion detection
       const handleLoadedMetadata = () => {
         console.log('[TherapySession] Video metadata loaded, setting up emotion detection');
@@ -60,7 +61,7 @@ export const TherapySession: React.FC<TherapySessionProps> = ({
           videoHeight: videoRef.current?.videoHeight,
           readyState: videoRef.current?.readyState
         });
-        
+
         setVideoElement(videoRef.current);
         // Auto-enable emotion detection when webcam is ready
         setIsEmotionDetectionEnabled(true);
@@ -69,7 +70,7 @@ export const TherapySession: React.FC<TherapySessionProps> = ({
 
       // Add event listener for when video metadata is loaded
       videoRef.current.addEventListener('loadedmetadata', handleLoadedMetadata, { once: true });
-      
+
       // Also try to play the video to ensure it's ready
       videoRef.current.play().catch(error => {
         console.warn('[TherapySession] Video play failed:', error);
@@ -97,7 +98,7 @@ export const TherapySession: React.FC<TherapySessionProps> = ({
   // Retry webcam
   const retryWebcam = useCallback(() => {
     if (retryAttempts.webcam >= 3) return; // Max 3 retries
-    
+
     setRetryAttempts(prev => ({ ...prev, webcam: prev.webcam + 1 }));
     setWebcamError(null);
     // WebcamCapture component will automatically retry when error is cleared
@@ -106,7 +107,7 @@ export const TherapySession: React.FC<TherapySessionProps> = ({
   // Retry emotion detection
   const retryEmotion = useCallback(() => {
     if (retryAttempts.emotion >= 3) return; // Max 3 retries
-    
+
     setRetryAttempts(prev => ({ ...prev, emotion: prev.emotion + 1 }));
     setEmotionError(null);
     // EmotionDetector will automatically retry when error is cleared
@@ -126,17 +127,18 @@ export const TherapySession: React.FC<TherapySessionProps> = ({
   if (isInitializing) {
     return (
       <div className={`therapy-session-loading ${className}`}>
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-          <Paper elevation={3} className="p-8 text-center">
-            <LoadingIndicator 
-              message="Preparing your therapy session..."
-              size="large"
-              variant="circular"
-            />
-            <Typography variant="body2" className="text-gray-500 mt-4">
+        <div className="min-h-screen bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 flex items-center justify-center p-4">
+          <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 text-center border border-white/20">
+            <div className="w-16 h-16 mx-auto mb-4 bg-white/20 rounded-full flex items-center justify-center">
+              <div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+            </div>
+            <Typography variant="h6" className="text-white font-semibold mb-2">
+              Preparing your therapy session...
+            </Typography>
+            <Typography variant="body2" className="text-blue-100">
               Setting up secure environment
             </Typography>
-          </Paper>
+          </div>
         </div>
       </div>
     );
@@ -145,213 +147,237 @@ export const TherapySession: React.FC<TherapySessionProps> = ({
   // Main therapy session interface
   return (
     <div className={`therapy-session ${className}`}>
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 sm:p-6 lg:p-8">
-        <div className="max-w-7xl mx-auto">
-          
-          {/* Header with Jennie Avatar */}
-          <header className="mb-6">
-            <div className="text-center mb-6">
-              <Typography 
-                variant="h3" 
-                component="h1" 
-                className="font-bold text-gray-800 mb-2 text-2xl sm:text-3xl lg:text-4xl"
-              >
-                AI Therapy Session
-              </Typography>
-              <Typography 
-                variant="body1" 
-                className="text-gray-600 text-sm sm:text-base"
-              >
-                A safe, private space for therapeutic conversations
-              </Typography>
+      <div className="min-h-screen bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800">
+
+        {/* Navigation Bar with Session Status */}
+        <nav className="flex items-center justify-between p-6 text-white">
+          <button
+            onClick={() => window.location.href = '/'}
+            className="text-2xl font-bold hover:text-blue-200 transition-colors"
+          >
+            Jennie
+          </button>
+          <div className="flex items-center space-x-4">
+            <div className="hidden md:flex items-center space-x-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 border border-white/20">
+              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+              <span className="text-sm">Session Active</span>
             </div>
-            
-            {/* Show Jennie Avatar only when no messages yet */}
-            <div className="flex justify-center mb-6">
-              <div className="w-full max-w-md">
-                <JennieAvatar showIntroduction={true} />
-              </div>
-            </div>
-          </header>
+            <button
+              onClick={() => window.location.href = '/'}
+              className="bg-white/10 backdrop-blur-sm border border-white/20 text-white px-4 py-2 rounded-lg font-semibold hover:bg-white/20 transition-colors"
+            >
+              Back to Home
+            </button>
+          </div>
+        </nav>
 
-          {/* Error Displays */}
-          {webcamError && (() => {
-            const webcamErrorProps: any = {
-              error: webcamError,
-              onDismiss: clearWebcamError,
-              variant: "banner",
-              className: "mb-4"
-            };
-            
-            if (webcamError.retryable && retryAttempts.webcam < 3) {
-              webcamErrorProps.onRetry = retryWebcam;
-            }
-            
-            return <ErrorDisplay {...webcamErrorProps} />;
-          })()}
+        <div className="px-4 sm:px-6 lg:px-8 pb-8">
+          <div className="max-w-7xl mx-auto">
 
-          {emotionError && (() => {
-            const emotionErrorProps: any = {
-              error: emotionError,
-              onDismiss: clearEmotionError,
-              variant: "banner",
-              className: "mb-4"
-            };
-            
-            if (emotionError.retryable && retryAttempts.emotion < 3) {
-              emotionErrorProps.onRetry = retryEmotion;
-            }
-            
-            return <ErrorDisplay {...emotionErrorProps} />;
-          })()}
-
-          {/* Main Content Area */}
-          <main className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            
-            {/* Webcam and Emotion Detection Panel */}
-            <div className="lg:col-span-1 order-2 lg:order-1">
-              <Paper elevation={2} className="p-4 bg-white rounded-lg h-fit">
-                <Typography 
-                  variant="h6" 
-                  className="text-gray-800 mb-4 text-center font-semibold"
+            {/* Header with Jennie Avatar */}
+            <header className="mb-8 text-center">
+              <div className="mb-6">
+                <Typography
+                  variant="h3"
+                  component="h1"
+                  className="font-bold text-white mb-3 text-3xl sm:text-4xl lg:text-5xl text-center"
                 >
-                  Video & Emotion Detection
+                  Your Therapy Session
                 </Typography>
-                
-                {/* Webcam Component with Graceful Degradation */}
-                <div className="mb-4">
-                  {(() => {
-                    const webcamFallbackProps: any = {
-                      condition: !webcamError,
-                      feature: "webcam",
-                      fallback: (
-                        <div className="text-center p-4 bg-gray-50 rounded-lg">
-                          <Typography variant="body2" className="text-gray-600">
-                            Text-only conversation mode
-                          </Typography>
-                        </div>
-                      )
-                    };
-                    
-                    if (webcamError?.message) {
-                      webcamFallbackProps.reason = webcamError.message;
-                    }
-                    
-                    if (webcamError?.retryable && retryAttempts.webcam < 3) {
-                      webcamFallbackProps.onRetry = retryWebcam;
-                    }
-                    
-                    return (
-                      <ProgressiveFallback {...webcamFallbackProps}>
-                        <WebcamCapture
-                          onStreamReady={handleWebcamReady}
-                          onError={handleWebcamError}
-                          width={280}
-                          height={210}
-                          autoStart={true}
-                          className="w-full"
-                        />
-                        
-                        {/* Hidden video element for emotion detection */}
-                        <video
-                          ref={videoRef}
-                          style={{ display: 'none' }}
-                          autoPlay
-                          playsInline
-                          muted
-                          onLoadedMetadata={() => {
-                            console.log('[TherapySession] Hidden video metadata loaded');
-                          }}
-                          onCanPlay={() => {
-                            console.log('[TherapySession] Hidden video can play');
-                          }}
-                          onError={(e) => {
-                            console.error('[TherapySession] Hidden video error:', e);
-                          }}
-                        />
-                        
-                        {/* Emotion Detection Component with Graceful Degradation */}
-                        {videoElement && (() => {
-                          const emotionFallbackProps: any = {
-                            condition: !emotionError,
-                            feature: "emotion",
-                            fallback: (
-                              <div className="text-center p-2 bg-yellow-50 rounded text-xs">
-                                <Typography variant="caption" className="text-yellow-700">
-                                  Emotion detection unavailable
-                                </Typography>
-                              </div>
-                            )
-                          };
-                          
-                          if (emotionError?.message) {
-                            emotionFallbackProps.reason = emotionError.message;
-                          }
-                          
-                          if (emotionError?.retryable && retryAttempts.emotion < 3) {
-                            emotionFallbackProps.onRetry = retryEmotion;
-                          }
-                          
-                          return (
-                            <ProgressiveFallback {...emotionFallbackProps}>
-                              <EmotionDetectorLazy
-                                videoElement={videoElement}
-                                onError={handleEmotionError}
-                                isActive={isEmotionDetectionEnabled}
-                                className="relative"
-                              />
-                            </ProgressiveFallback>
-                          );
-                        })()}
-                      </ProgressiveFallback>
-                    );
-                  })()}
-                </div>
+                <p className="text-blue-100 text-lg sm:text-xl text-center w-full">
+                  I'm here to listen and support you in a safe, private space
+                </p>
+              </div>
 
-                {/* Emotion Status */}
-                <div className="text-center">
-                  <Typography variant="caption" className="text-gray-500 block mb-2">
-                    Emotion detection helps Jennie understand your feelings better
+              {/* Show Jennie Avatar only when no messages yet */}
+              <div className="flex justify-center mb-8">
+                <div className="w-full max-w-md">
+                  <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20">
+                    <JennieAvatar showIntroduction={true} />
+                  </div>
+                </div>
+              </div>
+            </header>
+
+            {/* Error Displays */}
+            {webcamError && (() => {
+              const webcamErrorProps: any = {
+                error: webcamError,
+                onDismiss: clearWebcamError,
+                variant: "banner",
+                className: "mb-6 bg-red-500/10 backdrop-blur-sm border border-red-400/20 text-white rounded-xl"
+              };
+
+              if (webcamError.retryable && retryAttempts.webcam < 3) {
+                webcamErrorProps.onRetry = retryWebcam;
+              }
+
+              return <ErrorDisplay {...webcamErrorProps} />;
+            })()}
+
+            {emotionError && (() => {
+              const emotionErrorProps: any = {
+                error: emotionError,
+                onDismiss: clearEmotionError,
+                variant: "banner",
+                className: "mb-6 bg-yellow-500/10 backdrop-blur-sm border border-yellow-400/20 text-white rounded-xl"
+              };
+
+              if (emotionError.retryable && retryAttempts.emotion < 3) {
+                emotionErrorProps.onRetry = retryEmotion;
+              }
+
+              return <ErrorDisplay {...emotionErrorProps} />;
+            })()}
+
+            {/* Main Content Area */}
+            <main className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+
+              {/* Webcam and Emotion Detection Panel */}
+              <div className="lg:col-span-1 order-2 lg:order-1">
+                <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20 h-fit">
+                  <Typography
+                    variant="h6"
+                    className="text-white mb-6 text-center font-semibold"
+                  >
+                    Video & Emotion Detection
                   </Typography>
-                  
-                  {isEmotionDetectionActive && currentEmotion && (
-                    <Box className="p-3 bg-blue-50 rounded-lg">
-                      <Typography variant="body2" className="text-blue-700 font-medium">
-                        Current emotion: {currentEmotion.dominant}
-                      </Typography>
-                      <Typography variant="caption" className="text-blue-600">
-                        Confidence: {Math.round(currentEmotion.confidence * 100)}%
-                      </Typography>
-                    </Box>
-                  )}
-                  
-                  {!isEmotionDetectionActive && !webcamError && (
-                    <Box className="p-3 bg-gray-50 rounded-lg">
-                      <Typography variant="body2" className="text-gray-600">
-                        Emotion detection inactive
-                      </Typography>
-                    </Box>
-                  )}
-                </div>
-              </Paper>
-            </div>
 
-            {/* Chat Interface */}
-            <div className="lg:col-span-3 order-1 lg:order-2">
-              <Paper elevation={2} className="bg-white rounded-lg h-full">
-                <div className="p-4 h-full">
-                  <ChatInterface disabled={!session} />
-                </div>
-              </Paper>
-            </div>
-          </main>
+                  {/* Webcam Component with Graceful Degradation */}
+                  <div className="mb-6">
+                    {(() => {
+                      const webcamFallbackProps: any = {
+                        condition: !webcamError,
+                        feature: "webcam",
+                        fallback: (
+                          <div className="text-center p-4 bg-white/5 rounded-xl border border-white/10">
+                            <Typography variant="body2" className="text-blue-100">
+                              Text-only conversation mode
+                            </Typography>
+                          </div>
+                        )
+                      };
 
-          {/* Footer */}
-          <footer className="mt-8 text-center">
-            <Typography variant="caption" className="text-gray-500">
-              Your privacy is protected. Video processing happens locally on your device.
-            </Typography>
-          </footer>
+                      if (webcamError?.message) {
+                        webcamFallbackProps.reason = webcamError.message;
+                      }
+
+                      if (webcamError?.retryable && retryAttempts.webcam < 3) {
+                        webcamFallbackProps.onRetry = retryWebcam;
+                      }
+
+                      return (
+                        <ProgressiveFallback {...webcamFallbackProps}>
+                          <WebcamCapture
+                            onStreamReady={handleWebcamReady}
+                            onError={handleWebcamError}
+                            width={280}
+                            height={210}
+                            autoStart={true}
+                            className="w-full"
+                          />
+
+                          {/* Hidden video element for emotion detection */}
+                          <video
+                            ref={videoRef}
+                            style={{ display: 'none' }}
+                            autoPlay
+                            playsInline
+                            muted
+                            onLoadedMetadata={() => {
+                              console.log('[TherapySession] Hidden video metadata loaded');
+                            }}
+                            onCanPlay={() => {
+                              console.log('[TherapySession] Hidden video can play');
+                            }}
+                            onError={(e) => {
+                              console.error('[TherapySession] Hidden video error:', e);
+                            }}
+                          />
+
+                          {/* Emotion Detection Component with Graceful Degradation */}
+                          {videoElement && (() => {
+                            const emotionFallbackProps: any = {
+                              condition: !emotionError,
+                              feature: "emotion",
+                              fallback: (
+                                <div className="text-center p-3 bg-yellow-500/10 backdrop-blur-sm rounded-xl border border-yellow-400/20">
+                                  <Typography variant="caption" className="text-yellow-200">
+                                    Emotion detection unavailable
+                                  </Typography>
+                                </div>
+                              )
+                            };
+
+                            if (emotionError?.message) {
+                              emotionFallbackProps.reason = emotionError.message;
+                            }
+
+                            if (emotionError?.retryable && retryAttempts.emotion < 3) {
+                              emotionFallbackProps.onRetry = retryEmotion;
+                            }
+
+                            return (
+                              <ProgressiveFallback {...emotionFallbackProps}>
+                                <EmotionDetectorLazy
+                                  videoElement={videoElement}
+                                  onError={handleEmotionError}
+                                  isActive={isEmotionDetectionEnabled}
+                                  className="relative"
+                                />
+                              </ProgressiveFallback>
+                            );
+                          })()}
+                        </ProgressiveFallback>
+                      );
+                    })()}
+                  </div>
+
+                  {/* Emotion Status */}
+                  <div className="text-center">
+                    <Typography variant="caption" className="text-blue-100 block mb-3">
+                      Emotion detection helps Jennie understand your feelings better
+                    </Typography>
+
+                    {isEmotionDetectionActive && currentEmotion && (
+                      <Box className="p-4 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20">
+                        <Typography variant="body2" className="text-white font-medium mb-1">
+                          Current emotion: {currentEmotion.dominant}
+                        </Typography>
+                        <Typography variant="caption" className="text-blue-200">
+                          Confidence: {Math.round(currentEmotion.confidence * 100)}%
+                        </Typography>
+                      </Box>
+                    )}
+
+                    {!isEmotionDetectionActive && !webcamError && (
+                      <Box className="p-4 bg-white/5 rounded-xl border border-white/10">
+                        <Typography variant="body2" className="text-blue-200">
+                          Emotion detection inactive
+                        </Typography>
+                      </Box>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Chat Interface */}
+              <div className="lg:col-span-3 order-1 lg:order-2">
+                <div className="bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 h-full min-h-[600px]">
+                  <div className="p-6 h-full">
+                    <ChatInterface disabled={!session} />
+                  </div>
+                </div>
+              </div>
+            </main>
+
+            {/* Footer */}
+            <footer className="mt-8 text-center">
+              <Typography variant="caption" className="text-blue-200">
+                Your privacy is protected. Video processing happens locally on your device.
+              </Typography>
+            </footer>
+          </div>
         </div>
       </div>
     </div>

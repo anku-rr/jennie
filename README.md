@@ -9,16 +9,6 @@ This is a web-based AI therapist application that uses your webcam to analyze yo
 *   **Session-based Interaction:** Start and end therapy sessions, with the AI's responses tailored to your emotional state.
 *   **Modern UI:** A clean and responsive user interface built with React and Material-UI.
 
-## Tech Stack
-
-*   **Framework:** [Next.js](https://nextjs.org/)
-*   **UI Library:** [React](https://reactjs.org/)
-*   **UI Components:** [Material-UI](https://mui.com/)
-*   **Machine Learning:** [TensorFlow.js](https://www.tensorflow.org/js), [face-api.js](https://github.com/justadudewhohacks/face-api.js)
-*   **Language:** [TypeScript](https://www.typescriptlang.org/)
-*   **Styling:** [Tailwind CSS](https://tailwindcss.com/)
-*   **Testing:** [Jest](https://jestjs.io/), [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/)
-
 ## Getting Started
 
 Follow these instructions to get a copy of the project up and running on your local machine for development and testing purposes.
